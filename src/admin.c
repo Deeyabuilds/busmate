@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "admin.h"
 #include "file_handler.h"
@@ -28,25 +29,9 @@ int getInteger(const char *message)
 // Check Student ID
 int studentIdExists(int id)
 {
-    FILE *file;
     Student student;
 
-    file = fopen("data/students.dat", "rb");
-
-    if (file == NULL)
-        return 0;
-
-    while (fread(&student, sizeof(Student), 1, file) == 1)
-    {
-        if (student.studentId == id)
-        {
-            fclose(file);
-            return 1;
-        }
-    }
-
-    fclose(file);
-    return 0;
+    return loadStudentById(id, &student);
 }
 
 // Add Student
@@ -80,6 +65,16 @@ void addStudent(void)
         return;
     }
 
+    printf("Enter College ID: ");
+    fgets(student.collegeId, sizeof(student.collegeId), stdin);
+    student.collegeId[strcspn(student.collegeId, "\n")] = '\0';
+
+    if (strlen(student.collegeId) == 0)
+    {
+        printf("Invalid college ID!\n");
+        return;
+    }
+
     printf("Enter Password: ");
     fgets(student.password, sizeof(student.password), stdin);
     student.password[strcspn(student.password, "\n")] = '\0';
@@ -90,45 +85,41 @@ void addStudent(void)
         return;
     }
 
-    saveStudent(student);
-
-    printf("Student added successfully!\n");
+    if (saveStudent(student))
+        printf("Student added successfully!\n");
+    else
+        printf("Unable to save student record.\n");
 }
 
 // View Students
 void viewStudents(void)
 {
-    FILE *file;
-    Student student;
+    Student *students = NULL;
+    int count = 0;
+    int i;
 
-    file = fopen("data/students.dat", "rb");
-
-    if (file == NULL)
+    if (!loadAllStudentsDynamic(&students, &count))
     {
-        printf("\nNo student records found.\n");
+        printf("\nUnable to load student records.\n");
         return;
     }
 
     printf("\n====== STUDENT RECORDS ======\n");
-
-    while (fread(&student, sizeof(Student), 1, file) == 1)
+    for (i = 0; i < count; i++)
     {
-        printf("\nStudent ID : %d", student.studentId);
-        printf("\nName       : %s", student.name);
-        printf("\nPassword   : %s\n", student.password);
+        printf("\nStudent ID : %d", students[i].studentId);
+        printf("\nName       : %s", students[i].name);
+        printf("\nPassword   : %s\n", students[i].password);
     }
-
-    fclose(file);
+    if (count == 0)
+        printf("No student records found.\n");
+    free(students);
 }
 
 // Remove Student
 void removeStudent(void)
 {
-    FILE *file;
-    FILE *temp;
-    Student student;
     int studentId;
-    int found = 0;
 
     printf("\n====== REMOVE STUDENT ======\n");
 
@@ -140,43 +131,10 @@ void removeStudent(void)
         return;
     }
 
-    file = fopen("data/students.dat", "rb");
-    temp = fopen("data/temp.dat", "wb");
-
-    if (file == NULL || temp == NULL)
-    {
-        printf("Unable to open student records.\n");
-
-        if (file != NULL)
-            fclose(file);
-
-        if (temp != NULL)
-            fclose(temp);
-
-        return;
-    }
-
-    while (fread(&student, sizeof(Student), 1, file) == 1)
-    {
-        if (student.studentId == studentId)
-        {
-            found = 1;
-            continue;
-        }
-
-        fwrite(&student, sizeof(Student), 1, temp);
-    }
-
-    fclose(file);
-    fclose(temp);
-
-    remove("data/students.dat");
-    rename("data/temp.dat", "data/students.dat");
-
-    if (found)
+    if (deleteStudentById(studentId))
         printf("Student removed successfully!\n");
     else
-        printf("Student not found.\n");
+        printf("Unable to remove student. Confirm the ID exists and check for file errors.\n");
 }
 
 // Student Management
@@ -196,23 +154,23 @@ void studentManagement(void)
 
         switch (choice)
         {
-            case 1:
-                addStudent();
-                break;
+        case 1:
+            addStudent();
+            break;
 
-            case 2:
-                viewStudents();
-                break;
+        case 2:
+            viewStudents();
+            break;
 
-            case 3:
-                removeStudent();
-                break;
+        case 3:
+            removeStudent();
+            break;
 
-            case 0:
-                break;
+        case 0:
+            break;
 
-            default:
-                printf("Invalid choice!\n");
+        default:
+            printf("Invalid choice!\n");
         }
 
     } while (choice != 0);
@@ -247,7 +205,7 @@ int busIdExists(int id)
 // Add Bus
 void addBus(void)
 {
-    Bus bus;
+    Bus bus = {0};
 
     printf("\n====== ADD BUS ======\n");
 
@@ -284,10 +242,12 @@ void addBus(void)
     }
 
     bus.availableSeats = bus.capacity;
+    snprintf(bus.status, sizeof(bus.status), "Active");
 
-    saveBus(bus);
-
-    printf("Bus added successfully!\n");
+    if (saveBus(bus))
+        printf("Bus added successfully!\n");
+    else
+        printf("Unable to save bus. Check that the ID is unique and the data file is writable.\n");
 }
 
 // View Buses
@@ -392,23 +352,23 @@ void busManagement(void)
 
         switch (choice)
         {
-            case 1:
-                addBus();
-                break;
+        case 1:
+            addBus();
+            break;
 
-            case 2:
-                viewBuses();
-                break;
+        case 2:
+            viewBuses();
+            break;
 
-            case 3:
-                removeBus();
-                break;
+        case 3:
+            removeBus();
+            break;
 
-            case 0:
-                break;
+        case 0:
+            break;
 
-            default:
-                printf("Invalid choice!\n");
+        default:
+            printf("Invalid choice!\n");
         }
 
     } while (choice != 0);
@@ -443,7 +403,7 @@ int routeIdExists(int id)
 // Add Route
 void addRoute(void)
 {
-    Route route;
+    Route route = {0};
 
     printf("\n====== ADD ROUTE ======\n");
 
@@ -481,9 +441,10 @@ void addRoute(void)
         return;
     }
 
-    saveRoute(route);
-
-    printf("Route added successfully!\n");
+    if (saveRoute(route))
+        printf("Route added successfully!\n");
+    else
+        printf("Unable to save route. Check that the ID is unique and the data file is writable.\n");
 }
 
 // View Routes
@@ -587,23 +548,23 @@ void routeManagement(void)
 
         switch (choice)
         {
-            case 1:
-                addRoute();
-                break;
+        case 1:
+            addRoute();
+            break;
 
-            case 2:
-                viewRoutes();
-                break;
+        case 2:
+            viewRoutes();
+            break;
 
-            case 3:
-                removeRoute();
-                break;
+        case 3:
+            removeRoute();
+            break;
 
-            case 0:
-                break;
+        case 0:
+            break;
 
-            default:
-                printf("Invalid choice!\n");
+        default:
+            printf("Invalid choice!\n");
         }
 
     } while (choice != 0);
@@ -638,7 +599,7 @@ int driverIdExists(int id)
 // Add Driver
 void addDriver(void)
 {
-    Driver driver;
+    Driver driver = {0};
 
     printf("\n====== ADD DRIVER ======\n");
 
@@ -676,9 +637,20 @@ void addDriver(void)
         return;
     }
 
-    saveDriver(driver);
+    printf("Enter Password: ");
+    fgets(driver.password, sizeof(driver.password), stdin);
+    driver.password[strcspn(driver.password, "\n")] = '\0';
 
-    printf("Driver added successfully!\n");
+    if (strlen(driver.password) == 0)
+    {
+        printf("Invalid password!\n");
+        return;
+    }
+
+    if (saveDriver(driver))
+        printf("Driver added successfully!\n");
+    else
+        printf("Unable to save driver. Check that the ID is unique and the data file is writable.\n");
 }
 
 // View Drivers
@@ -782,23 +754,23 @@ void driverManagement(void)
 
         switch (choice)
         {
-            case 1:
-                addDriver();
-                break;
+        case 1:
+            addDriver();
+            break;
 
-            case 2:
-                viewDrivers();
-                break;
+        case 2:
+            viewDrivers();
+            break;
 
-            case 3:
-                removeDriver();
-                break;
+        case 3:
+            removeDriver();
+            break;
 
-            case 0:
-                break;
+        case 0:
+            break;
 
-            default:
-                printf("Invalid choice!\n");
+        default:
+            printf("Invalid choice!\n");
         }
 
     } while (choice != 0);
@@ -833,7 +805,7 @@ int scheduleIdExists(int id)
 // Add Schedule
 void addSchedule(void)
 {
-    Schedule schedule;
+    Schedule schedule = {0};
 
     printf("\n====== ADD SCHEDULE ======\n");
 
@@ -897,9 +869,10 @@ void addSchedule(void)
         return;
     }
 
-    saveSchedule(schedule);
-
-    printf("Schedule added successfully!\n");
+    if (saveSchedule(schedule))
+        printf("Schedule added successfully!\n");
+    else
+        printf("Unable to save schedule. Check that the ID is unique and the data file is writable.\n");
 }
 
 // View Schedules
@@ -1007,23 +980,23 @@ void scheduleManagement(void)
 
         switch (choice)
         {
-            case 1:
-                addSchedule();
-                break;
+        case 1:
+            addSchedule();
+            break;
 
-            case 2:
-                viewSchedules();
-                break;
+        case 2:
+            viewSchedules();
+            break;
 
-            case 3:
-                removeSchedule();
-                break;
+        case 3:
+            removeSchedule();
+            break;
 
-            case 0:
-                break;
+        case 0:
+            break;
 
-            default:
-                printf("Invalid choice!\n");
+        default:
+            printf("Invalid choice!\n");
         }
 
     } while (choice != 0);
@@ -1048,32 +1021,32 @@ void adminMenu(void)
 
         switch (choice)
         {
-            case 1:
-                studentManagement();
-                break;
+        case 1:
+            studentManagement();
+            break;
 
-            case 2:
-                busManagement();
-                break;
+        case 2:
+            busManagement();
+            break;
 
-            case 3:
-                routeManagement();
-                break;
+        case 3:
+            routeManagement();
+            break;
 
-            case 4:
-                driverManagement();
-                break;
+        case 4:
+            driverManagement();
+            break;
 
-            case 5:
-                scheduleManagement();
-                break;
+        case 5:
+            scheduleManagement();
+            break;
 
-            case 0:
-                printf("Logging out...\n");
-                break;
+        case 0:
+            printf("Logging out...\n");
+            break;
 
-            default:
-                printf("Invalid choice!\n");
+        default:
+            printf("Invalid choice!\n");
         }
 
     } while (choice != 0);

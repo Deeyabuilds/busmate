@@ -1,0 +1,51 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build BusMate GUI",
+            "type": "shell",
+            "command": "C:/msys64/usr/bin/bash.exe",
+            "args": [
+                "-lc",
+                "/c/Users/Gunjan/pbldsa/BusMate/BusMate/build_gui.sh"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "clear": true
+            }
+        },
+        {
+            "label": "Run BusMate GUI",
+            "type": "shell",
+            "command": "C:/msys64/usr/bin/bash.exe",
+            "args": [
+                "-lc",
+                "/c/Users/Gunjan/pbldsa/BusMate/BusMate/run_gui.sh"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "dependsOn": [
+                "Build BusMate GUI"
+            ],
+            "dependsOrder": "sequence",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            }
+        }
+    ]
+}

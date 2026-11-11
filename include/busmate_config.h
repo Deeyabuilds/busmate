@@ -1,0 +1,8 @@
+#ifndef BUSMATE_CONFIG_H
+#define BUSMATE_CONFIG_H
+
+#ifndef BUSMATE_SEATS_PER_ROW
+#define BUSMATE_SEATS_PER_ROW 4
+#endif
+
+#endif
