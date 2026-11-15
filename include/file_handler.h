@@ -34,14 +34,14 @@ int appendRecord(const char *path,
 int updateRecordById(const char *path,
                      size_t recordSize,
                      size_t idOffset,
-                     const char *id,
+                     int id,
                      const void *replacement,
                      int *updated);
 
 int deleteRecordById(const char *path,
                      size_t recordSize,
                      size_t idOffset,
-                     const char *id,
+                     int id,
                      int *deleted);
 
 void saveStudent(Student student);

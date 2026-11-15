@@ -1,4 +1,3 @@
-
 @echo off
 setlocal
 
@@ -18,7 +17,7 @@ if not defined GTK_CFLAGS (
 
 echo Building BusMate...
 
-gcc src\main.c src\gui.c src\admin.c -o BusMate.exe -Iinclude %GTK_CFLAGS% %GTK_LIBS% -mwindows
+gcc src\main.c src\gui.c src\admin.c src\file_handler.c src\seat_allocation.c -o BusMate.exe -Iinclude %GTK_CFLAGS% %GTK_LIBS% -mwindows
 
 if errorlevel 1 (
     echo.

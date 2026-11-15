@@ -2,45 +2,52 @@
 #define STRUCTURES_H
 
 typedef struct {
-    char studentId[20];
+    int studentId;
     char name[50];
     char password[50];
 } Student;
 
 typedef struct {
-    char adminId[20];
+    int adminId;
     char username[50];
     char password[50];
 } Admin;
 
 typedef struct {
-    char driverId[20];
+    int driverId;
     char name[50];
-    char assignedBusId[20];
+    char phone[20];
+    int assignedBusId;
 } Driver;
 
 typedef struct {
-    char busId[20];
+    int busId;
     char busNumber[20];
     int capacity;
+    int availableSeats;
 } Bus;
 
 typedef struct {
-    char routeId[20];
+    int routeId;
+    char routeName[50];
+    char stops[100];
     char starting_point[50];
     char destination[50];
 } Route;
 
 typedef struct {
-    char scheduleId[20];
-    char busId[20];
-    char routeId[20];
+    int scheduleId;
+    int busId;
+    int routeId;
+    char startTime[20];
+    char endTime[20];
+    char dayType[20];
     char departure_time[20];
 } Schedule;
 
 typedef struct {
-    char studentId[20];
-    char scheduleId[20];
+    int studentId;
+    int scheduleId;
     int seat_number;
 } Booking;
 
@@ -49,6 +56,7 @@ typedef struct {
     int seatNumber;
     char status[20];
     int studentId;
+    char preference[20];
 } Seat;
 
 #endif
