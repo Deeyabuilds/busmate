@@ -6,6 +6,6 @@
 int add_schedule(Schedule schedule);
 int view_schedules(void);
 int update_schedule(Schedule schedule);
-int delete_schedule(const char *schedule_id);
+int delete_schedule(int schedule_id);
 
 #endif

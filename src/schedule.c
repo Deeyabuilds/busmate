@@ -1,3 +1,4 @@
+
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,48 +8,69 @@
 
 int add_schedule(Schedule schedule)
 {
-    if (schedule.schedule_id[0] == '\0' || schedule.bus_id[0] == '\0')
+    if (schedule.scheduleId <= 0 ||
+        schedule.busId <= 0 ||
+        schedule.routeId <= 0)
         return 0;
-    return file_save_record(FILE_SCHEDULES_PATH, &schedule, sizeof(schedule),
-                            offsetof(Schedule, schedule_id),
-                            sizeof(schedule.schedule_id)) == FILE_STATUS_OK;
+
+    return appendRecord(SCHEDULES_FILE,
+                        sizeof(Schedule), &schedule) == 0;
 }
 
 int view_schedules(void)
 {
-    void *records = NULL;
+    Schedule *schedules = NULL;
     size_t count = 0;
-    size_t index;
-    FileStatus status = file_read_records(FILE_SCHEDULES_PATH, &records,
-                                          sizeof(Schedule), &count);
-    if (status == FILE_STATUS_NOT_FOUND)
-        return 1;
-    if (status != FILE_STATUS_OK)
+    size_t i;
+
+    if (readRecords(SCHEDULES_FILE, sizeof(Schedule),
+                    (void **)&schedules, &count) != 0)
         return 0;
 
-    for (index = 0; index < count; ++index)
+    for (i = 0; i < count; i++)
     {
-        Schedule *schedules = (Schedule *)records;
-        printf("Schedule %s | bus %s | route %s | %s\n",
-               schedules[index].schedule_id, schedules[index].bus_id,
-               schedules[index].route_id, schedules[index].departure_time);
+        printf("Schedule ID: %d | Bus ID: %d | Route ID: %d | "
+               "Departure: %s | Start: %s | End: %s | Day: %s\n",
+               schedules[i].scheduleId,
+               schedules[i].busId,
+               schedules[i].routeId,
+               schedules[i].departure_time,
+               schedules[i].startTime,
+               schedules[i].endTime,
+               schedules[i].dayType);
     }
-    free(records);
+
+    free(schedules);
     return 1;
 }
 
 int update_schedule(Schedule schedule)
 {
-    return file_update_record(FILE_SCHEDULES_PATH, &schedule, sizeof(schedule),
-                              offsetof(Schedule, schedule_id),
-                              sizeof(schedule.schedule_id)) == FILE_STATUS_OK;
+    int updated = 0;
+
+    if (schedule.scheduleId <= 0)
+        return 0;
+
+    if (updateRecordById(SCHEDULES_FILE, sizeof(Schedule),
+                         offsetof(Schedule, scheduleId),
+                         schedule.scheduleId,
+                         &schedule, &updated) != 0)
+        return 0;
+
+    return updated;
 }
 
-int delete_schedule(const char *schedule_id)
+int delete_schedule(int schedule_id)
 {
-    return file_delete_record(FILE_SCHEDULES_PATH, schedule_id,
-                              sizeof(Schedule),
-                              offsetof(Schedule, schedule_id),
-                              sizeof(((Schedule *)0)->schedule_id)) ==
-           FILE_STATUS_OK;
+    int deleted = 0;
+
+    if (schedule_id <= 0)
+        return 0;
+
+    if (deleteRecordById(SCHEDULES_FILE, sizeof(Schedule),
+                         offsetof(Schedule, scheduleId),
+                         schedule_id, &deleted) != 0)
+        return 0;
+
+    return deleted;
 }
