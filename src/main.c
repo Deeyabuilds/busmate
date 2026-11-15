@@ -5,7 +5,8 @@ int main(int argc, char *argv[])
     GtkApplication *app;
     int status;
 
-    app = gtk_application_new("com.busmate.app", G_APPLICATION_DEFAULT_FLAGS);
+    app = gtk_application_new("com.busmate.operations",
+                              G_APPLICATION_DEFAULT_FLAGS);
 
     g_signal_connect(app, "activate", G_CALLBACK(activate), NULL);
 
