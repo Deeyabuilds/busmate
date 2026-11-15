@@ -1,13 +1,37 @@
 #ifndef ADMIN_H
 #define ADMIN_H
 
-#include <gtk/gtk.h>
-#include "structures.h"
+// Admin Menu
+void adminMenu(void);
 
-void show_admin_login(GtkWindow *parent);
-void show_admin_dashboard(GtkWindow *parent);
+// Student Management
+void studentManagement(void);
+void addStudent(void);
+void viewStudents(void);
+void removeStudent(void);
 
-int admin_login(const char *username, const char *password);
-int register_admin(Admin admin);
+// Bus Management
+void busManagement(void);
+void addBus(void);
+void viewBuses(void);
+void removeBus(void);
+
+// Route Management
+void routeManagement(void);
+void addRoute(void);
+void viewRoutes(void);
+void removeRoute(void);
+
+// Driver Management
+void driverManagement(void);
+void addDriver(void);
+void viewDrivers(void);
+void removeDriver(void);
+
+// Schedule Management
+void scheduleManagement(void);
+void addSchedule(void);
+void viewSchedules(void);
+void removeSchedule(void);
 
 #endif

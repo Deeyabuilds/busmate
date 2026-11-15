@@ -1,41 +1,38 @@
 #ifndef FILE_HANDLER_H
 #define FILE_HANDLER_H
 
+#include <stddef.h>
+#include <stdio.h>
 #include "structures.h"
 
-/* Student */
+#define STUDENTS_FILE "data/students.dat"
+#define BUSES_FILE "data/buses.dat"
+#define ROUTES_FILE "data/routes.dat"
+#define DRIVERS_FILE "data/drivers.dat"
+#define SCHEDULES_FILE "data/schedules.dat"
+#define SEATS_FILE "data/seats.dat"
+
+FILE *openDataFile(const char *path, const char *mode);
+int closeDataFile(FILE *file);
+int readRecords(const char *path, size_t recordSize, void **records, size_t *count);
+int writeRecords(const char *path, size_t recordSize, const void *records, size_t count);
+int appendRecord(const char *path, size_t recordSize, const void *record);
+int updateRecordById(const char *path, size_t recordSize, size_t idOffset,
+                     int id, const void *replacement, int *updated);
+int deleteRecordById(const char *path, size_t recordSize, size_t idOffset,
+                     int id, int *deleted);
+
 void saveStudent(Student student);
-void viewStudents(void);
-void updateStudent(Student student);
-void deleteStudent(char student_id[]);
-
-/* Bus */
 void saveBus(Bus bus);
-void viewBuses(void);
-void updateBus(Bus bus);
-void deleteBus(char bus_id[]);
-
-/* Route */
 void saveRoute(Route route);
-void viewRoutes(void);
-void updateRoute(Route route);
-void deleteRoute(char route_id[]);
-
-/* Driver */
 void saveDriver(Driver driver);
-void viewDrivers(void);
-void updateDriver(Driver driver);
-void deleteDriver(char driver_id[]);
-
-/* Schedule */
 void saveSchedule(Schedule schedule);
-void viewSchedules(void);
-void updateSchedule(Schedule schedule);
-void deleteSchedule(char schedule_id[]);
+int saveSeat(Seat seat);
 
-/* Booking */
-void saveBooking(Booking booking);
-void viewBookings(void);
-void deleteBooking(char student_id[], char schedule_id[]);
-
+int updateStudent(Student student);
+int updateBus(Bus bus);
+int updateRoute(Route route);
+int updateDriver(Driver driver);
+int updateSchedule(Schedule schedule);
+int updateSeatStatus(int busId, int seatNumber, const char *status, int studentId);
 #endif
