@@ -2,20 +2,24 @@
 
 **Smart College Bus Management System**
 
-BusMate is a C-based graphical application for managing college transportation. It has separate sections for students, drivers, and admins. The system manages buses, routes, schedules, seat allocations, bookings, notifications, and reports using GTK4 and file handling.
+BusMate is a C-based GTK4 application with separate Admin, Student, and Driver
+interfaces. The home screen opens a task-specific portal for each role.
 
 ## Building
 
-Compile the project from the root directory using:
+From the project root, build and run BusMate:
 
 ```bat
 build.bat
 ```
 
-Run on Windows:
+The build command compiles all modules with GTK4 flags from `pkg-config` and
+starts `BusMate.exe` after a successful build. To build manually from an MSYS2
+UCRT64 terminal:
 
-```bat
-BusMate.exe
+```sh
+gcc -std=c99 -Wall -Wextra -Werror src/main.c src/gui.c src/admin.c src/student.c src/driver.c src/bus.c src/route.c src/schedule.c src/booking.c src/seat_allocation.c src/file_handler.c src/notification.c src/report.c -o BusMate.exe -Iinclude $(pkg-config --cflags --libs gtk4) -mwindows
+./BusMate.exe
 ```
 
 ## How the code is organised
@@ -64,8 +68,15 @@ The application uses files to store records.
 | `routes.dat`        | Route information                   |
 | `schedules.dat`     | Schedule details                    |
 | `bookings.dat`      | Booking and seat allocation records |
+| `seats.dat`         | Synchronized booked-seat records      |
 | `notifications.dat` | Notification records                |
 | `reports.dat`       | Report records                      |
+| `waitlist.dat`      | Ordered seat requests and preferences |
+| `temp.data`         | Active student, bus, and schedule IDs |
+| `student_profiles.dat` | College ID and management status    |
+| `bus_status.dat`    | Bus activation status                 |
+
+
 
 ## Project Structure
 
