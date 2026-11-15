@@ -12,22 +12,19 @@ for /f "delims=" %%I in ('pkg-config --libs gtk4') do set "GTK_LIBS=%%I"
 
 if not defined GTK_CFLAGS (
     echo ERROR: Could not find GTK4 compiler flags.
-    pause
     exit /b 1
 )
 
 echo Building BusMate...
 
-gcc src\main.c src\gui.c src\admin.c -o BusMate.exe -Iinclude %GTK_CFLAGS% %GTK_LIBS% -mwindows
+gcc -std=c99 -Wall -Wextra -Werror src\main.c src\gui.c src\admin.c src\student.c src\driver.c src\bus.c src\route.c src\schedule.c src\booking.c src\seat_allocation.c src\file_handler.c src\notification.c src\report.c -o BusMate.exe -Iinclude %GTK_CFLAGS% %GTK_LIBS% -mwindows
 
 if errorlevel 1 (
     echo.
     echo BUILD FAILED
-    pause
     exit /b 1
 )
 
 echo.
 echo BUILD SUCCESSFUL!
 BusMate.exe
-pause

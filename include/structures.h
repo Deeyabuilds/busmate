@@ -44,4 +44,15 @@ typedef struct {
     int seat_number;
 } Booking;
 
+typedef enum {
+    SEAT_PREFERENCE_ANY = 0,
+    SEAT_PREFERENCE_WINDOW,
+    SEAT_PREFERENCE_FRONT
+} SeatPreference;
+
+typedef struct {
+    Booking booking;
+    SeatPreference preference;
+} SeatWaitingListEntry;
+
 #endif
