@@ -1,60 +1,195 @@
-#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
 
 #include "../include/bus.h"
 #include "../include/file_handler.h"
 
+
+/* =========================================================
+   ADD BUS
+   ========================================================= */
+
 int add_bus(Bus bus)
 {
-    if (bus.bus_id[0] == '\0' || bus.bus_number[0] == '\0' ||
-        bus.capacity <= 0)
-        return 0;
-    return file_save_record(FILE_BUSES_PATH, &bus, sizeof(bus),
-                            offsetof(Bus, bus_id), sizeof(bus.bus_id)) ==
-           FILE_STATUS_OK;
-}
+    void *records;
+    Bus *buses;
+    size_t count;
+    size_t i;
 
-int view_buses(void)
-{
-    void *records = NULL;
-    size_t count = 0;
-    size_t index;
-    FileStatus status = file_read_records(FILE_BUSES_PATH, &records,
-                                          sizeof(Bus), &count);
-    if (status == FILE_STATUS_NOT_FOUND)
-        return 1;
-    if (status != FILE_STATUS_OK)
-        return 0;
+    records = NULL;
+    count = 0;
 
-    for (index = 0; index < count; ++index)
+    if (bus.busId <= 0)
     {
-        Bus *buses = (Bus *)records;
-        if (buses[index].capacity <= 0)
-        {
-            free(records);
-            return 0;
-        }
-        printf("Bus %s | %s | %d seats\n", buses[index].bus_id,
-               buses[index].bus_number, buses[index].capacity);
+        return -1;
     }
-    free(records);
+
+    if (bus.busNumber[0] == '\0')
+    {
+        return -1;
+    }
+
+    if (bus.capacity <= 0)
+    {
+        return -1;
+    }
+
+    if (bus.availableSeats < 0 ||
+        bus.availableSeats > bus.capacity)
+    {
+        return -1;
+    }
+
+    if (readRecords(
+            BUSES_FILE,
+            sizeof(Bus),
+            &records,
+            &count) == 0)
+    {
+        buses = (Bus *)records;
+
+        for (i = 0; i < count; i++)
+        {
+            if (buses[i].busId == bus.busId)
+            {
+                free(records);
+                return -2;
+            }
+        }
+
+        free(records);
+    }
+
+    if (appendRecord(
+            BUSES_FILE,
+            sizeof(Bus),
+            &bus) != 0)
+    {
+        return -1;
+    }
+
     return 1;
 }
 
-int update_bus(Bus bus)
+
+/* =========================================================
+   SEARCH BUS
+   ========================================================= */
+
+int search_bus(int busId,
+               Bus *bus)
 {
-    if (bus.bus_id[0] == '\0' || bus.bus_number[0] == '\0' ||
-        bus.capacity <= 0)
-        return 0;
-    return file_update_record(FILE_BUSES_PATH, &bus, sizeof(bus),
-                              offsetof(Bus, bus_id), sizeof(bus.bus_id)) ==
-           FILE_STATUS_OK;
+    void *records;
+    Bus *buses;
+    size_t count;
+    size_t i;
+
+    if (bus == NULL)
+    {
+        return -1;
+    }
+
+    records = NULL;
+    count = 0;
+
+    if (readRecords(
+            BUSES_FILE,
+            sizeof(Bus),
+            &records,
+            &count) != 0)
+    {
+        return -1;
+    }
+
+    buses = (Bus *)records;
+
+    for (i = 0; i < count; i++)
+    {
+        if (buses[i].busId == busId)
+        {
+            *bus = buses[i];
+
+            free(records);
+
+            return 1;
+        }
+    }
+
+    free(records);
+
+    return 0;
 }
 
-int delete_bus(const char *bus_id)
+
+/* =========================================================
+   UPDATE BUS
+   ========================================================= */
+
+int update_bus(Bus bus)
 {
-    return file_delete_record(FILE_BUSES_PATH, bus_id, sizeof(Bus),
-                              offsetof(Bus, bus_id),
-                              sizeof(((Bus *)0)->bus_id)) == FILE_STATUS_OK;
+    int updated;
+
+    updated = 0;
+
+    if (bus.busId <= 0 ||
+        bus.busNumber[0] == '\0' ||
+        bus.capacity <= 0 ||
+        bus.availableSeats < 0 ||
+        bus.availableSeats > bus.capacity)
+    {
+        return -1;
+    }
+
+    if (updateRecordById(
+            BUSES_FILE,
+            sizeof(Bus),
+            offsetof(Bus, busId),
+            bus.busId,
+            &bus,
+            &updated) != 0)
+    {
+        return -1;
+    }
+
+    if (updated)
+    {
+        return 1;
+    }
+
+    return 0;
+}
+
+
+/* =========================================================
+   DELETE BUS
+   ========================================================= */
+
+int delete_bus(int busId)
+{
+    int deleted;
+
+    deleted = 0;
+
+    if (busId <= 0)
+    {
+        return -1;
+    }
+
+    if (deleteRecordById(
+            BUSES_FILE,
+            sizeof(Bus),
+            offsetof(Bus, busId),
+            busId,
+            &deleted) != 0)
+    {
+        return -1;
+    }
+
+    if (deleted)
+    {
+        return 1;
+    }
+
+    return 0;
 }

@@ -1,19 +1,29 @@
-#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stddef.h>
 
 #include "../include/file_handler.h"
 
+
+/* =========================================================
+   BASIC FILE FUNCTIONS
+   ========================================================= */
+
 FILE *openDataFile(const char *path, const char *mode)
 {
+    FILE *file;
+
     if (path == NULL || mode == NULL)
     {
         return NULL;
     }
 
-    return fopen(path, mode);
+    file = fopen(path, mode);
+
+    return file;
 }
+
 
 int closeDataFile(FILE *file)
 {
@@ -25,6 +35,11 @@ int closeDataFile(FILE *file)
     return fclose(file);
 }
 
+
+/* =========================================================
+   READ RECORDS
+   ========================================================= */
+
 int readRecords(const char *path,
                 size_t recordSize,
                 void **records,
@@ -35,7 +50,10 @@ int readRecords(const char *path,
     size_t recordCount;
     void *data;
 
-    if (path == NULL || records == NULL || count == NULL || recordSize == 0)
+    if (path == NULL ||
+        records == NULL ||
+        count == NULL ||
+        recordSize == 0)
     {
         return -1;
     }
@@ -47,7 +65,7 @@ int readRecords(const char *path,
 
     if (file == NULL)
     {
-        return 0;
+        return -1;
     }
 
     if (fseek(file, 0, SEEK_END) != 0)
@@ -64,10 +82,12 @@ int readRecords(const char *path,
         return -1;
     }
 
-    if (fseek(file, 0, SEEK_SET) != 0)
+    rewind(file);
+
+    if (fileSize == 0)
     {
         fclose(file);
-        return -1;
+        return 0;
     }
 
     if ((size_t)fileSize % recordSize != 0)
@@ -78,12 +98,6 @@ int readRecords(const char *path,
 
     recordCount = (size_t)fileSize / recordSize;
 
-    if (recordCount == 0)
-    {
-        fclose(file);
-        return 0;
-    }
-
     data = malloc(recordCount * recordSize);
 
     if (data == NULL)
@@ -92,7 +106,10 @@ int readRecords(const char *path,
         return -1;
     }
 
-    if (fread(data, recordSize, recordCount, file) != recordCount)
+    if (fread(data,
+              recordSize,
+              recordCount,
+              file) != recordCount)
     {
         free(data);
         fclose(file);
@@ -107,6 +124,11 @@ int readRecords(const char *path,
     return 0;
 }
 
+
+/* =========================================================
+   WRITE RECORDS
+   ========================================================= */
+
 int writeRecords(const char *path,
                  size_t recordSize,
                  const void *records,
@@ -114,12 +136,8 @@ int writeRecords(const char *path,
 {
     FILE *file;
 
-    if (path == NULL || recordSize == 0)
-    {
-        return -1;
-    }
-
-    if (count > 0 && records == NULL)
+    if (path == NULL ||
+        recordSize == 0)
     {
         return -1;
     }
@@ -133,7 +151,16 @@ int writeRecords(const char *path,
 
     if (count > 0)
     {
-        if (fwrite(records, recordSize, count, file) != count)
+        if (records == NULL)
+        {
+            fclose(file);
+            return -1;
+        }
+
+        if (fwrite(records,
+                   recordSize,
+                   count,
+                   file) != count)
         {
             fclose(file);
             return -1;
@@ -145,13 +172,20 @@ int writeRecords(const char *path,
     return 0;
 }
 
+
+/* =========================================================
+   APPEND RECORD
+   ========================================================= */
+
 int appendRecord(const char *path,
                  size_t recordSize,
                  const void *record)
 {
     FILE *file;
 
-    if (path == NULL || record == NULL || recordSize == 0)
+    if (path == NULL ||
+        record == NULL ||
+        recordSize == 0)
     {
         return -1;
     }
@@ -163,7 +197,10 @@ int appendRecord(const char *path,
         return -1;
     }
 
-    if (fwrite(record, recordSize, 1, file) != 1)
+    if (fwrite(record,
+               recordSize,
+               1,
+               file) != 1)
     {
         fclose(file);
         return -1;
@@ -174,6 +211,11 @@ int appendRecord(const char *path,
     return 0;
 }
 
+
+/* =========================================================
+   UPDATE RECORD BY ID
+   ========================================================= */
+
 int updateRecordById(const char *path,
                      size_t recordSize,
                      size_t idOffset,
@@ -181,25 +223,26 @@ int updateRecordById(const char *path,
                      const void *replacement,
                      int *updated)
 {
-    void *records = NULL;
-    size_t count = 0;
+    void *records;
+    size_t count;
     size_t i;
-    int found = 0;
-
-    if (updated != NULL)
-    {
-        *updated = 0;
-    }
 
     if (path == NULL ||
-        recordSize == 0 ||
         replacement == NULL ||
-        idOffset + sizeof(int) > recordSize)
+        updated == NULL ||
+        recordSize == 0)
     {
         return -1;
     }
 
-    if (readRecords(path, recordSize, &records, &count) != 0)
+    *updated = 0;
+    records = NULL;
+    count = 0;
+
+    if (readRecords(path,
+                    recordSize,
+                    &records,
+                    &count) != 0)
     {
         return -1;
     }
@@ -207,33 +250,33 @@ int updateRecordById(const char *path,
     for (i = 0; i < count; i++)
     {
         char *record;
-        int recordId;
+        int *recordId;
 
-        record = (char *)records + (i * recordSize);
+        record = (char *)records +
+                 (i * recordSize);
 
-        memcpy(&recordId,
-               record + idOffset,
-               sizeof(int));
+        recordId = (int *)(record + idOffset);
 
-        if (recordId == id)
+        if (*recordId == id)
         {
-            memcpy(record, replacement, recordSize);
-            found = 1;
+            memcpy(record,
+                   replacement,
+                   recordSize);
+
+            *updated = 1;
             break;
         }
     }
 
-    if (found)
+    if (*updated)
     {
-        if (writeRecords(path, recordSize, records, count) != 0)
+        if (writeRecords(path,
+                         recordSize,
+                         records,
+                         count) != 0)
         {
             free(records);
             return -1;
-        }
-
-        if (updated != NULL)
-        {
-            *updated = 1;
         }
     }
 
@@ -242,32 +285,42 @@ int updateRecordById(const char *path,
     return 0;
 }
 
+
+/* =========================================================
+   DELETE RECORD BY ID
+   ========================================================= */
+
 int deleteRecordById(const char *path,
                      size_t recordSize,
                      size_t idOffset,
                      int id,
                      int *deleted)
 {
-    void *records = NULL;
-    void *newRecords = NULL;
-    size_t count = 0;
-    size_t i;
-    size_t newCount = 0;
-    int found = 0;
+    void *records;
+    void *newRecords;
 
-    if (deleted != NULL)
-    {
-        *deleted = 0;
-    }
+    size_t count;
+    size_t newCount;
+    size_t i;
 
     if (path == NULL ||
-        recordSize == 0 ||
-        idOffset + sizeof(int) > recordSize)
+        deleted == NULL ||
+        recordSize == 0)
     {
         return -1;
     }
 
-    if (readRecords(path, recordSize, &records, &count) != 0)
+    *deleted = 0;
+
+    records = NULL;
+    newRecords = NULL;
+    count = 0;
+    newCount = 0;
+
+    if (readRecords(path,
+                    recordSize,
+                    &records,
+                    &count) != 0)
     {
         return -1;
     }
@@ -278,249 +331,309 @@ int deleteRecordById(const char *path,
         return 0;
     }
 
-    for (i = 0; i < count; i++)
-    {
-        char *record;
-        int recordId;
+    newRecords = malloc(count * recordSize);
 
-        record = (char *)records + (i * recordSize);
-
-        memcpy(&recordId,
-               record + idOffset,
-               sizeof(int));
-
-        if (!found && recordId == id)
-        {
-            found = 1;
-            continue;
-        }
-
-        newCount++;
-    }
-
-    if (!found)
+    if (newRecords == NULL)
     {
         free(records);
-        return 0;
+        return -1;
     }
-
-    if (newCount > 0)
-    {
-        newRecords = malloc(newCount * recordSize);
-
-        if (newRecords == NULL)
-        {
-            free(records);
-            return -1;
-        }
-    }
-
-    newCount = 0;
 
     for (i = 0; i < count; i++)
     {
         char *record;
-        int recordId;
+        int *recordId;
 
-        record = (char *)records + (i * recordSize);
+        record = (char *)records +
+                 (i * recordSize);
 
-        memcpy(&recordId,
-               record + idOffset,
-               sizeof(int));
+        recordId = (int *)(record + idOffset);
 
-        if (recordId == id)
+        if (*recordId == id &&
+            !(*deleted))
         {
+            *deleted = 1;
             continue;
         }
 
-        memcpy((char *)newRecords + (newCount * recordSize),
+        memcpy((char *)newRecords +
+                   (newCount * recordSize),
                record,
                recordSize);
 
         newCount++;
     }
 
-    if (writeRecords(path,
-                     recordSize,
-                     newRecords,
-                     newCount) != 0)
+    if (*deleted)
     {
-        free(records);
-        free(newRecords);
-        return -1;
+        if (writeRecords(path,
+                         recordSize,
+                         newRecords,
+                         newCount) != 0)
+        {
+            free(records);
+            free(newRecords);
+            return -1;
+        }
     }
 
     free(records);
     free(newRecords);
 
-    if (deleted != NULL)
+    return 0;
+}
+
+
+/* =========================================================
+   SAVE FUNCTIONS
+   ========================================================= */
+
+void saveStudent(Student student)
+{
+    appendRecord(
+        STUDENTS_FILE,
+        sizeof(Student),
+        &student
+    );
+}
+
+
+void saveBus(Bus bus)
+{
+    appendRecord(
+        BUSES_FILE,
+        sizeof(Bus),
+        &bus
+    );
+}
+
+
+void saveRoute(Route route)
+{
+    appendRecord(
+        ROUTES_FILE,
+        sizeof(Route),
+        &route
+    );
+}
+
+
+void saveDriver(Driver driver)
+{
+    appendRecord(
+        DRIVERS_FILE,
+        sizeof(Driver),
+        &driver
+    );
+}
+
+
+void saveSchedule(Schedule schedule)
+{
+    appendRecord(
+        SCHEDULES_FILE,
+        sizeof(Schedule),
+        &schedule
+    );
+}
+
+
+int saveSeat(Seat seat)
+{
+    return appendRecord(
+        SEATS_FILE,
+        sizeof(Seat),
+        &seat
+    );
+}
+
+
+/* =========================================================
+   UPDATE FUNCTIONS
+   ========================================================= */
+
+int updateStudent(Student student)
+{
+    int updated;
+
+    updated = 0;
+
+    if (updateRecordById(
+            STUDENTS_FILE,
+            sizeof(Student),
+            offsetof(Student, studentId),
+            student.studentId,
+            &student,
+            &updated) != 0)
     {
-        *deleted = 1;
+        return -1;
+    }
+
+    if (updated)
+    {
+        return 1;
     }
 
     return 0;
 }
 
-void saveStudent(Student student)
-{
-    appendRecord(STUDENTS_FILE,
-                 sizeof(Student),
-                 &student);
-}
 
-void saveBus(Bus bus)
+int updateBusRecord(Bus bus)
 {
-    appendRecord(BUSES_FILE,
-                 sizeof(Bus),
-                 &bus);
-}
+    int updated;
 
-void saveRoute(Route route)
-{
-    appendRecord(ROUTES_FILE,
-                 sizeof(Route),
-                 &route);
-}
+    updated = 0;
 
-void saveDriver(Driver driver)
-{
-    appendRecord(DRIVERS_FILE,
-                 sizeof(Driver),
-                 &driver);
-}
-
-void saveSchedule(Schedule schedule)
-{
-    appendRecord(SCHEDULES_FILE,
-                 sizeof(Schedule),
-                 &schedule);
-}
-
-int saveSeat(Seat seat)
-{
-    return appendRecord(SEATS_FILE,
-                        sizeof(Seat),
-                        &seat);
-}
-
-int updateStudent(Student student)
-{
-    int updated = 0;
-
-    if (updateRecordById(STUDENTS_FILE,
-                         sizeof(Student),
-                         offsetof(Student, studentId),
-                         student.studentId,
-                         &student,
-                         &updated) != 0)
+    if (updateRecordById(
+            BUSES_FILE,
+            sizeof(Bus),
+            offsetof(Bus, busId),
+            bus.busId,
+            &bus,
+            &updated) != 0)
     {
         return -1;
     }
 
-    return updated;
-}
-
-int updateBus(Bus bus)
-{
-    int updated = 0;
-
-    if (updateRecordById(BUSES_FILE,
-                         sizeof(Bus),
-                         offsetof(Bus, busId),
-                         bus.busId,
-                         &bus,
-                         &updated) != 0)
+    if (updated)
     {
-        return -1;
+        return 1;
     }
 
-    return updated;
+    return 0;
 }
+
 
 int updateRoute(Route route)
 {
-    int updated = 0;
+    int updated;
 
-    if (updateRecordById(ROUTES_FILE,
-                         sizeof(Route),
-                         offsetof(Route, routeId),
-                         route.routeId,
-                         &route,
-                         &updated) != 0)
+    updated = 0;
+
+    if (updateRecordById(
+            ROUTES_FILE,
+            sizeof(Route),
+            offsetof(Route, routeId),
+            route.routeId,
+            &route,
+            &updated) != 0)
     {
         return -1;
     }
 
-    return updated;
+    if (updated)
+    {
+        return 1;
+    }
+
+    return 0;
 }
+
 
 int updateDriver(Driver driver)
 {
-    int updated = 0;
+    int updated;
 
-    if (updateRecordById(DRIVERS_FILE,
-                         sizeof(Driver),
-                         offsetof(Driver, driverId),
-                         driver.driverId,
-                         &driver,
-                         &updated) != 0)
+    updated = 0;
+
+    if (updateRecordById(
+            DRIVERS_FILE,
+            sizeof(Driver),
+            offsetof(Driver, driverId),
+            driver.driverId,
+            &driver,
+            &updated) != 0)
     {
         return -1;
     }
 
-    return updated;
+    if (updated)
+    {
+        return 1;
+    }
+
+    return 0;
 }
+
 
 int updateSchedule(Schedule schedule)
 {
-    int updated = 0;
+    int updated;
 
-    if (updateRecordById(SCHEDULES_FILE,
-                         sizeof(Schedule),
-                         offsetof(Schedule, scheduleId),
-                         schedule.scheduleId,
-                         &schedule,
-                         &updated) != 0)
+    updated = 0;
+
+    if (updateRecordById(
+            SCHEDULES_FILE,
+            sizeof(Schedule),
+            offsetof(Schedule, scheduleId),
+            schedule.scheduleId,
+            &schedule,
+            &updated) != 0)
     {
         return -1;
     }
 
-    return updated;
+    if (updated)
+    {
+        return 1;
+    }
+
+    return 0;
 }
+
+
+/* =========================================================
+   UPDATE SEAT STATUS
+   ========================================================= */
 
 int updateSeatStatus(int busId,
                      int seatNumber,
                      const char *status,
                      int studentId)
 {
-    Seat *seats = NULL;
-    size_t count = 0;
+    void *records;
+    Seat *seats;
+
+    size_t count;
     size_t i;
-    int found = 0;
+
+    int found;
 
     if (status == NULL)
     {
         return -1;
     }
 
-    if (readRecords(SEATS_FILE,
-                    sizeof(Seat),
-                    (void **)&seats,
-                    &count) != 0)
+    records = NULL;
+    seats = NULL;
+    count = 0;
+    found = 0;
+
+    if (readRecords(
+            SEATS_FILE,
+            sizeof(Seat),
+            &records,
+            &count) != 0)
     {
         return -1;
     }
+
+    seats = (Seat *)records;
 
     for (i = 0; i < count; i++)
     {
         if (seats[i].busId == busId &&
             seats[i].seatNumber == seatNumber)
         {
-            strncpy(seats[i].status,
-                    status,
-                    sizeof(seats[i].status) - 1);
+            strncpy(
+                seats[i].status,
+                status,
+                sizeof(seats[i].status) - 1
+            );
 
-            seats[i].status[sizeof(seats[i].status) - 1] = '\0';
+            seats[i].status[
+                sizeof(seats[i].status) - 1
+            ] = '\0';
 
             seats[i].studentId = studentId;
 
@@ -531,17 +644,144 @@ int updateSeatStatus(int busId,
 
     if (found)
     {
-        if (writeRecords(SEATS_FILE,
-                         sizeof(Seat),
-                         seats,
-                         count) != 0)
+        if (writeRecords(
+                SEATS_FILE,
+                sizeof(Seat),
+                seats,
+                count) != 0)
         {
-            free(seats);
+            free(records);
             return -1;
         }
     }
 
-    free(seats);
+    free(records);
 
-    return found;
+    if (found)
+    {
+        return 0;
+    }
+
+    return -1;
+}
+
+void initialize_default_data(void)
+{
+    void *records;
+    size_t count;
+    size_t i;
+
+    Student student;
+    Driver driver;
+
+    int student_found;
+    int driver_found;
+
+
+    /* =====================================================
+       DEFAULT STUDENT
+       ===================================================== */
+
+    records = NULL;
+    count = 0;
+    student_found = 0;
+
+    if (readRecords(
+            STUDENTS_FILE,
+            sizeof(Student),
+            &records,
+            &count) == 0)
+    {
+        Student *students;
+
+        students = (Student *)records;
+
+        for (i = 0; i < count; i++)
+        {
+            if (students[i].studentId == 1001)
+            {
+                student_found = 1;
+                break;
+            }
+        }
+    }
+
+    free(records);
+
+
+    if (!student_found)
+    {
+        student.studentId = 1001;
+
+        strcpy(
+            student.name,
+            "Deeya"
+        );
+
+        strcpy(
+            student.password,
+            "student123"
+        );
+
+        appendRecord(
+            STUDENTS_FILE,
+            sizeof(Student),
+            &student
+        );
+    }
+
+
+    /* =====================================================
+       DEFAULT DRIVER
+       ===================================================== */
+
+    records = NULL;
+    count = 0;
+    driver_found = 0;
+
+    if (readRecords(
+            DRIVERS_FILE,
+            sizeof(Driver),
+            &records,
+            &count) == 0)
+    {
+        Driver *drivers;
+
+        drivers = (Driver *)records;
+
+        for (i = 0; i < count; i++)
+        {
+            if (drivers[i].driverId == 2001)
+            {
+                driver_found = 1;
+                break;
+            }
+        }
+    }
+
+    free(records);
+
+
+    if (!driver_found)
+    {
+        driver.driverId = 2001;
+
+        strcpy(
+            driver.name,
+            "Raj"
+        );
+
+        strcpy(
+            driver.phone,
+            "9876543210"
+        );
+
+        driver.assignedBusId = 101;
+
+        appendRecord(
+            DRIVERS_FILE,
+            sizeof(Driver),
+            &driver
+        );
+    }
 }

@@ -1,37 +1,27 @@
 #ifndef ADMIN_H
 #define ADMIN_H
 
-// Admin Menu
-void adminMenu(void);
+#include "structures.h"
 
-// Student Management
-void studentManagement(void);
-void addStudent(void);
-void viewStudents(void);
-void removeStudent(void);
+/* =========================================================
+   ADMIN LOGIN
+   ========================================================= */
 
-// Bus Management
-void busManagement(void);
-void addBus(void);
-void viewBuses(void);
-void removeBus(void);
+int admin_login(const char *username,
+                const char *password);
 
-// Route Management
-void routeManagement(void);
-void addRoute(void);
-void viewRoutes(void);
-void removeRoute(void);
 
-// Driver Management
-void driverManagement(void);
-void addDriver(void);
-void viewDrivers(void);
-void removeDriver(void);
+/* =========================================================
+   ADMIN DATA OPERATIONS
+   ========================================================= */
 
-// Schedule Management
-void scheduleManagement(void);
-void addSchedule(void);
-void viewSchedules(void);
-void removeSchedule(void);
+int add_admin(Admin admin);
+
+int search_admin(int adminId,
+                 Admin *admin);
+
+int update_admin(Admin admin);
+
+int delete_admin(int adminId);
 
 #endif

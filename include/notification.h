@@ -3,7 +3,15 @@
 
 #include "structures.h"
 
-int send_notification(const char *message,
-                     const char *recipient_id);
+/* Notification operations */
+
+int add_notification(Notification notification);
+
+int search_notification(int notificationId,
+                        Notification *notification);
+
+int update_notification(Notification notification);
+
+int delete_notification(int notificationId);
 
 #endif

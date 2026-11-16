@@ -59,4 +59,13 @@ typedef struct {
     char preference[20];
 } Seat;
 
+
+typedef struct {
+    int notificationId;
+    int studentId;
+    char message[200];
+    char date[20];
+    char status[20];
+} Notification;
+
 #endif

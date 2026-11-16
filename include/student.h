@@ -1,14 +1,20 @@
 #ifndef STUDENT_H
 #define STUDENT_H
 
-#include <gtk/gtk.h>
 #include "structures.h"
 
-void show_student_login(GtkWindow *parent);
-void show_student_dashboard(GtkWindow *parent, const char *student_id);
-void show_student_management_window(GtkWindow *parent);
+/* Student operations */
 
-int register_student(Student student);
-int login_student(const char *student_id, const char *password);
+int add_student(Student student);
+
+int search_student(int studentId,
+                   Student *student);
+
+int update_student(Student student);
+
+int delete_student(int studentId);
+
+int login_student(int studentId,
+                  const char *password);
 
 #endif

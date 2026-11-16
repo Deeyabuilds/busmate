@@ -1,12 +1,17 @@
 #ifndef DRIVER_H
 #define DRIVER_H
 
-#include <gtk/gtk.h>
 #include "structures.h"
 
-void show_driver_login(GtkWindow *parent);
-void show_driver_dashboard(GtkWindow *parent, const Driver *driver);
+/* Driver operations */
 
-int login_driver(const char *driver_id, Driver *driver);
+int add_driver(Driver driver);
+
+int search_driver(int driverId,
+                  Driver *driver);
+
+int update_driver(Driver driver);
+
+int delete_driver(int driverId);
 
 #endif

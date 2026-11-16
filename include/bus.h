@@ -3,9 +3,15 @@
 
 #include "structures.h"
 
+/* Bus operations */
+
 int add_bus(Bus bus);
-int view_buses(void);
+
+int search_bus(int busId,
+               Bus *bus);
+
 int update_bus(Bus bus);
-int delete_bus(const char *bus_id);
+
+int delete_bus(int busId);
 
 #endif

@@ -15,18 +15,48 @@ if not defined GTK_CFLAGS (
     exit /b 1
 )
 
+echo.
 echo Building BusMate...
+echo.
 
-gcc src\main.c src\gui.c src\admin.c src\file_handler.c src\seat_allocation.c -o BusMate.exe -Iinclude %GTK_CFLAGS% %GTK_LIBS% -mwindows
+gcc ^
+src\main.c ^
+src\gui.c ^
+src\admin.c ^
+src\file_handler.c ^
+src\student.c ^
+src\driver.c ^
+src\bus.c ^
+src\route.c ^
+src\schedule.c ^
+src\booking.c ^
+src\seat_allocation.c ^
+src\notification.c ^
+src\report.c ^
+-o BusMate.exe ^
+-Iinclude ^
+%GTK_CFLAGS% ^
+%GTK_LIBS% ^
+-mwindows
 
 if errorlevel 1 (
     echo.
+    echo ========================================
     echo BUILD FAILED
+    echo ========================================
+    echo.
     pause
     exit /b 1
 )
 
 echo.
+echo ========================================
 echo BUILD SUCCESSFUL!
+echo ========================================
+echo.
+echo Starting BusMate...
+echo.
+
 BusMate.exe
+
 pause

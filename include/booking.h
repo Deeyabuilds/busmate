@@ -3,9 +3,17 @@
 
 #include "structures.h"
 
-int create_booking(Booking booking);
-int view_bookings(void);
-int cancel_booking(const char *student_id,
-                   const char *schedule_id);
+/* Booking operations */
+
+int add_booking(Booking booking);
+
+int search_booking(int studentId,
+                   int scheduleId,
+                   Booking *booking);
+
+int update_booking(Booking booking);
+
+int delete_booking(int studentId,
+                   int scheduleId);
 
 #endif
